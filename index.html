@@ -639,9 +639,9 @@ window.addEventListener('scroll', function() {
   document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 60);
 });
 
-// SUPABASE
-var SUPA_URL = 'https://mlaqtniujnvfxcvcourm.supabase.co';
-var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1sYXF0bml1am52ZnhjdmNvdXJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MzUyMzIsImV4cCI6MjA5MzQxMTIzMn0.Neh7VUS8ADsxf0DPab0JoJyGXOAXnLIaXzXbKzj2BGs';
+// AVISO DE PEDIDOS — Edge Function publica: guarda el lead en leads_web
+// y avisa al restaurante por Telegram. Sin claves en el cliente.
+var NOTIFY_URL = 'https://mlaqtniujnvfxcvcourm.supabase.co/functions/v1/burguer-notify';
 
 // ESTADO CHAT
 var greeted = false;
@@ -774,18 +774,16 @@ function sendMsg() {
     estado = 'libre';
 
     var resumenItems = carrito.map(function(i){ return i.nombre + ' ' + i.precio.toFixed(2) + 'EUR'; }).join(' | ');
-    var waTxt = 'PEDIDO SMASH BROS Madrid\nNombre: ' + datosPedido.nombre + '\nTel: ' + datosPedido.telefono + '\nPedido: ' + resumenItems + '\nTOTAL: ' + carritoTotal.toFixed(2) + 'EUR';
-    window.open('https://wa.me/34643199580?text=' + encodeURIComponent(waTxt), '_blank');
 
-    // Supabase
-    fetch(SUPA_URL + '/rest/v1/leads_web', {
+    // El pedido se envia al restaurante (lead + aviso por Telegram).
+    fetch(NOTIFY_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ nombre: datosPedido.nombre, telefono: datosPedido.telefono, sector: 'hosteleria', interes: 'smash-pedido', mensaje: resumenItems + ' | ' + carritoTotal.toFixed(2) + 'EUR', origen: 'smash-bros-demo' })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre: datosPedido.nombre, telefono: datosPedido.telefono, interes: 'smash-pedido', mensaje: resumenItems + ' | ' + carritoTotal.toFixed(2) + 'EUR' })
     }).catch(function(){});
 
     setTimeout(function(){
-      botSay('Pedido confirmado, ' + datosPedido.nombre + '!\nTotal: ' + carritoTotal.toFixed(2) + '€\n\nTe hemos enviado la confirmacion por WhatsApp. Listo en breve!');
+      botSay('Pedido confirmado, ' + datosPedido.nombre + '!\nTotal: ' + carritoTotal.toFixed(2) + '€\n\nHemos avisado al restaurante. Te llamamos para confirmar. Listo en breve!');
       vaciarCarrito();
     }, 400);
     return;
